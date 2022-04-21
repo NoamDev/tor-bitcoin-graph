@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  webapp:
+    build: webapp
+  tor:
+    build:
+      context: tor
+      args:
+        SOCKER_ADDRESS: "webapp:80"
