@@ -1,4 +1,3 @@
 #!/bin/sh
-echo "onion domain:"
-cat /var/lib/tor/bitcoin-graph/hostname
+echo "onion domain: http://$(cat /var/lib/tor/bitcoin-graph/hostname)"
 tor

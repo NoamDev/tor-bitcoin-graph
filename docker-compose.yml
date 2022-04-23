@@ -3,7 +3,4 @@ services:
   webapp:
     build: webapp
   tor:
-    build:
-      context: tor
-      args:
-        SOCKER_ADDRESS: "webapp:80"
+    build: tor
