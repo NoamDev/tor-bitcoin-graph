@@ -23,14 +23,23 @@ export type Transaction = {
     fee: number
 }
 
-export type GraphNode<T,U> = {
+export type GraphNode<T> = {
     value: T,
-    in_edges: GraphEdge<T,U>[],
-    out_edges: GraphEdge<T,U>[]
+    id: string
 }
 
-export type GraphEdge<T,U> = {
-    value: U,
-    from: GraphNode<T,U>,
-    to: GraphNode<T,U>
+export type GraphEdge<T> = {
+    value: T,
+    id: string,
+    source: string,
+    target: string
 }
+
+export type Graph<T,U> = {
+    nodes: {[key:string]: GraphNode<T>},
+    edges: GraphEdge<U>[]
+}
+
+export type BlockchainNode = GraphNode<Wallet>;
+export type BlockchainEdge = GraphEdge<Transaction>;
+export type BlockchainGraph = Graph<Wallet,Transaction>;

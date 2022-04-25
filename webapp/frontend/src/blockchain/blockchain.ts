@@ -1,16 +1,40 @@
-import {Wallet, Transaction, GraphEdge, GraphNode} from './models';
+import {Wallet, Transaction, GraphEdge, GraphNode, BlockchainNode, BlockchainEdge, BlockchainGraph} from './models';
 
-export async function getTransactionGraph(addresses: string[]) {
+import chunk from 'lodash.chunk'
+
+async function fetchJson(url: string, backoff=1000) {
+    var r;
+    try {
+        r = await fetch(url);
+        return await r.json();
+    } catch(e) {
+        if(backoff >= 5000) {
+            throw e;
+        }
+        return new Promise((resolve, reject)=>{
+            setTimeout(async ()=>{
+                try {
+                    let json = await fetchJson(url, backoff*2);
+                    resolve(json);
+                } catch(e) {
+                    reject(e);
+                }
+            }, backoff);
+        });
+    }
+}
+
+export async function getTransactionGraph(addresses: string[]): Promise<BlockchainGraph> {
     let addresses_set = new Set(addresses);
 
-    let r = await fetch(`https://blockchain.info/multiaddr?active=${addresses.join('|')}&n=100`);
-    let json = await r.json();
-
-    type BlockchainNode = GraphNode<Wallet,Transaction>;
-    type BlockchainEdge = GraphEdge<Wallet,Transaction>;
+    let json = await fetchJson(`https://blockchain.info/multiaddr?active=${addresses.join('|')}&n=100`);
     
-    let nodes = new Map<string, BlockchainNode>();
-    let external_addresses: string[] = [];
+    let nodes: {
+        [key:string]: BlockchainNode
+    } = {};
+    let edges: BlockchainEdge[] = [];
+    
+    let new_addresses: string[] = [];
 
     for(let address_json of json['addresses']) {
         let wallet: Wallet = {
@@ -21,20 +45,18 @@ export async function getTransactionGraph(addresses: string[]) {
         }
         let node: BlockchainNode = {
             value: wallet,
-            in_edges: [],
-            out_edges: []
+            id: address_json['address']
         }
-        nodes.set(address_json['address'], node);
+        nodes[address_json['address']] = node;
     }
 
     let tx_jsons = json['txs'];
     let offset = 100;
     while(json['txs'].length == 100) {
-        let r = await fetch(`https://blockchain.info/multiaddr?active=${addresses.join('|')}&n=100&offset=${offset}`);
-        json = await r.json();
+        json = await fetchJson(`https://blockchain.info/multiaddr?active=${addresses.join('|')}&n=100&offset=${offset}`);
         tx_jsons.push(...json['txs']);
+        offset += 100;
     }
-
     for(let tx_json of tx_jsons) {
         let input_addresses: string[] = [];
         let output_addresses: string[] = [];
@@ -61,7 +83,7 @@ export async function getTransactionGraph(addresses: string[]) {
         
         let out_nodes = output_addresses.map( address =>
             {
-                let node = nodes.get(address);
+                let node = nodes[address];
                 if(!node) {
                     node = {
                         value: {
@@ -70,11 +92,10 @@ export async function getTransactionGraph(addresses: string[]) {
                             num_in_txs: 0,
                             num_out_txs: 0
                         },
-                        in_edges: [],
-                        out_edges: []
+                        id: address
                     }
-                    nodes.set(address, node);
-                    external_addresses.push(address);
+                    nodes[address] =node;
+                    new_addresses.push(address);
                 }
                 return node;
             }
@@ -82,8 +103,8 @@ export async function getTransactionGraph(addresses: string[]) {
 
         let in_nodes = input_addresses
             .filter(address => addresses_set.has(address))
-            .map(address => nodes.get(address)!);
-        
+            .map(address => nodes[address]!);
+        let i=0;
         for(let node of out_nodes) {
             let wallet = node.value;
             wallet.num_in_txs += 1;
@@ -98,12 +119,13 @@ export async function getTransactionGraph(addresses: string[]) {
                 wallet.last_in_tx_hash = tx.hash;
             }
             
-            let edges = in_nodes.map(from_node => ({
+            let in_edges = in_nodes.map(from_node => ({
+                id: tx.hash + '_' + i++,
                 value: tx,
-                from: from_node,
-                to: node
+                source: from_node.id,
+                target: node.id
             }));
-            node.in_edges.push(...edges);
+            edges.push(...in_edges);
         }
         for(let node of in_nodes) {
             let wallet = node.value;
@@ -119,21 +141,22 @@ export async function getTransactionGraph(addresses: string[]) {
                 wallet.last_out_tx_hash = tx.hash;
             }
             
-            let edges = out_nodes.map(to_node => ({
+            let out_edges = out_nodes.map(to_node => ({
+                id: tx.hash + '_' + i++,
                 value: tx,
-                from: node,
-                to: to_node
+                source: node.id,
+                target: to_node.id
             }));
-            node.out_edges.push(...edges);
-        }
-
-        let r = await fetch(`https://blockchain.info/balance?active=${external_addresses.join('|')}`);
-        let json = await r.json();
-        
-        for(let address in external_addresses) {
-            let node = nodes.get(address)!;
-            node.value.balance = json[address]['total_balance'];
+            edges.push(...out_edges);
         }
     }
-    return nodes;
+
+    for(const addresses_chunk of chunk(new_addresses, 50)) {
+        let balances_json = await fetchJson(`https://blockchain.info/balance?active=${addresses_chunk.join('|')}`);
+        for(let address of addresses_chunk) {
+            let node = nodes[address]!;
+            node.value.balance = balances_json[address]['final_balance'];
+        }
+    }
+    return {nodes: nodes, edges: edges};
 }
