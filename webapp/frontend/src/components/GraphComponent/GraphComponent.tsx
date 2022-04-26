@@ -10,7 +10,8 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 
 type GraphComponentProps = {
-    graph: BlockchainGraph
+    graph: BlockchainGraph,
+    onNewGraphClicked?: ()=>void
 };
 
 type GraphComponentState = {
@@ -109,6 +110,10 @@ export class GraphComponent extends React.Component<GraphComponentProps,GraphCom
         }
     }
 
+    handleNewGraphClicked() {
+        this.props.onNewGraphClicked?.();
+    }
+
     renderSelectedElement() {
         const selectedElement = this.state.selectedElement;
         if(!selectedElement) {
@@ -129,6 +134,9 @@ export class GraphComponent extends React.Component<GraphComponentProps,GraphCom
 
         return (
             <Grid container>
+                <Grid item m={1}>
+                    <Button variant="contained" onClick={this.handleNewGraphClicked.bind(this)}>New Graph</Button>
+                </Grid>
                 <Grid item m={1}>
                     <Button variant="contained" onClick={this.handleDownloadJSON.bind(this)}>Download JSON</Button>
                 </Grid>

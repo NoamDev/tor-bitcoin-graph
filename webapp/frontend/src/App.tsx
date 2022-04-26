@@ -69,6 +69,12 @@ class App extends React.Component<AppProps,AppState> {
     });
   }
 
+  handleNewGraphClicked(){
+    this.setState({
+      graph: null
+    });
+  }
+
   renderByState() {
     if(this.state.isLoading) {
       return (
@@ -82,7 +88,10 @@ class App extends React.Component<AppProps,AppState> {
         </Box>
       )
     } else if (this.state.graph!=null) {
-      return (<GraphComponent key="graph" graph={this.state.graph}/>);
+      return (<GraphComponent
+               key="graph"
+               graph={this.state.graph}
+               onNewGraphClicked={this.handleNewGraphClicked.bind(this)}/>);
     } else {
       return (
         <Grid container spacing={2}

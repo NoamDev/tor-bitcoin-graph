@@ -113,11 +113,14 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
             if(!first_in_tx_index || tx_index < first_in_tx_index) {
                 wallet.first_in_tx_index = tx_index;
                 wallet.first_in_tx_hash = tx.hash;
+                wallet.first_in_tx_date = tx.date;
             }
             let last_in_tx_index = wallet.last_in_tx_index;
             if(!last_in_tx_index || tx_index > last_in_tx_index) {
                 wallet.last_in_tx_index = tx_index;
                 wallet.last_in_tx_hash = tx.hash;
+                wallet.last_in_tx_date = tx.date;
+                wallet.last_in_tx_amount = tx.amount;
             }
         }
         for(let node of in_nodes) {
@@ -127,11 +130,14 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
             if(!first_out_tx_index || tx_index < first_out_tx_index) {
                 wallet.first_out_tx_index = tx_index;
                 wallet.first_out_tx_hash = tx.hash;
+                wallet.first_out_tx_date = tx.date;
             }
             let last_out_tx_index = wallet.last_out_tx_index;
             if(!last_out_tx_index || tx_index > last_out_tx_index) {
                 wallet.last_out_tx_index = tx_index;
                 wallet.last_out_tx_hash = tx.hash;
+                wallet.last_out_tx_date = tx.date;
+                wallet.last_out_tx_amount = tx.amount;
             }
         }
         let i=0;

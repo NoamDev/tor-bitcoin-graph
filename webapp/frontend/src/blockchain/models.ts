@@ -13,6 +13,12 @@ export type Wallet = {
     first_out_tx_index?: number,
     last_in_tx_index?: number,
     last_out_tx_index?: number
+    first_in_tx_date?: number,
+    first_out_tx_date?: number,
+    last_in_tx_date?: number,
+    last_out_tx_date?: number,
+    last_in_tx_amount?: number,
+    last_out_tx_amount?: number,
 };
 
 export type Transaction = {
