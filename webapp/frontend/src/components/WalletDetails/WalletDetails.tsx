@@ -20,5 +20,34 @@ export default function WalletDetails(props: WalletDetailsProps) {
                 <Grid item>
                     {formatBalance(wallet.balance)} BTC
                 </Grid>
+                <Grid item>
+                    <b>Incoming Transactions</b>
+                </Grid>
+                <Grid item>
+                    {wallet.num_in_txs}
+                </Grid>
+                <Grid item>
+                    <b>Outgoing Transactions</b>
+                </Grid>
+                <Grid item>
+                    {wallet.num_out_txs}
+                </Grid>
+                {wallet.last_in_tx_hash &&
+                    [(<Grid item>
+                        <b>Last Incoming Transaction</b>
+                    </Grid>),
+                    (<Grid item>
+                        {wallet.last_in_tx_hash}
+                    </Grid>)]
+                }
+                {wallet.last_out_tx_hash &&
+                    [(<Grid item>
+                        <b>Last Outgoing Transaction</b>
+                    </Grid>),
+                    (<Grid item>
+                        {wallet.last_out_tx_hash}
+                    </Grid>)]
+                }
+                
             </Grid>);
 }

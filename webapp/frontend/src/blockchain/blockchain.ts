@@ -44,7 +44,7 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
             num_out_txs: 0
         }
         let node: BlockchainNode = {
-            value: wallet,
+            details: wallet,
             id: address_json['address']
         }
         nodes[address_json['address']] = node;
@@ -77,7 +77,9 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
             date: tx_json['time'],
             block_index: tx_json['block_index'],
             amount: amount_out,
-            fee: fee
+            fee: fee,
+            inputs: input_addresses,
+            outputs: output_addresses
         };
         let tx_index = tx_json['tx_index'];
         
@@ -86,7 +88,7 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
                 let node = nodes[address];
                 if(!node) {
                     node = {
-                        value: {
+                        details: {
                             address: address,
                             balance: 0,
                             num_in_txs: 0,
@@ -104,9 +106,8 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
         let in_nodes = input_addresses
             .filter(address => addresses_set.has(address))
             .map(address => nodes[address]!);
-        let i=0;
         for(let node of out_nodes) {
-            let wallet = node.value;
+            let wallet = node.details;
             wallet.num_in_txs += 1;
             let first_in_tx_index = wallet.first_in_tx_index;
             if(!first_in_tx_index || tx_index < first_in_tx_index) {
@@ -118,17 +119,9 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
                 wallet.last_in_tx_index = tx_index;
                 wallet.last_in_tx_hash = tx.hash;
             }
-            
-            let in_edges = in_nodes.map(from_node => ({
-                id: tx.hash + '_' + i++,
-                value: tx,
-                source: from_node.id,
-                target: node.id
-            }));
-            edges.push(...in_edges);
         }
         for(let node of in_nodes) {
-            let wallet = node.value;
+            let wallet = node.details;
             wallet.num_out_txs += 1;
             let first_out_tx_index = wallet.first_out_tx_index;
             if(!first_out_tx_index || tx_index < first_out_tx_index) {
@@ -140,14 +133,21 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
                 wallet.last_out_tx_index = tx_index;
                 wallet.last_out_tx_hash = tx.hash;
             }
-            
-            let out_edges = out_nodes.map(to_node => ({
-                id: tx.hash + '_' + i++,
-                value: tx,
-                source: node.id,
-                target: to_node.id
-            }));
-            edges.push(...out_edges);
+        }
+        let i=0;
+        for(const in_node of in_nodes) {
+            for(const out_node of out_nodes) {
+                if(in_node.id !== out_node.id) {
+                    edges.push(
+                        {
+                            id: tx.hash + '_' + i++,
+                            details: tx,
+                            source: in_node.id,
+                            target: out_node.id
+                        }
+                    );
+                }
+            }
         }
     }
 
@@ -155,8 +155,8 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
         let balances_json = await fetchJson(`https://blockchain.info/balance?active=${addresses_chunk.join('|')}`);
         for(let address of addresses_chunk) {
             let node = nodes[address]!;
-            node.value.balance = balances_json[address]['final_balance'];
+            node.details.balance = balances_json[address]['final_balance'];
         }
     }
-    return {nodes: nodes, edges: edges};
+    return {nodes: Object.values(nodes), edges: edges};
 }

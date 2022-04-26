@@ -20,23 +20,25 @@ export type Transaction = {
     date: number,
     block_index?: number,
     amount: number,
-    fee: number
+    fee: number,
+    inputs: string[],
+    outputs: string[]
 }
 
 export type GraphNode<T> = {
-    value: T,
+    details: T,
     id: string
 }
 
 export type GraphEdge<T> = {
-    value: T,
+    details: T,
     id: string,
     source: string,
     target: string
 }
 
 export type Graph<T,U> = {
-    nodes: {[key:string]: GraphNode<T>},
+    nodes: GraphNode<T>[],
     edges: GraphEdge<U>[]
 }
 
