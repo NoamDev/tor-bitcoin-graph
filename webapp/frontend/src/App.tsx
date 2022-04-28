@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent } from 'react';
 import './App.css';
 import { getTransactionGraph } from './blockchain/blockchain';
 import { BlockchainGraph } from './blockchain/models';
@@ -8,9 +8,6 @@ import Grid from '@mui/material/Grid';
 import {AddressesForm} from './components/AddressesForm/AddressesForm';
 import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button';
-import Input from '@mui/material/Input';
-import { Stack } from '@mui/material';
-import { resolve } from 'path';
 
 type AppProps = {};
 

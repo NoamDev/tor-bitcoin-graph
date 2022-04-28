@@ -1,4 +1,4 @@
-import {Wallet, Transaction, GraphEdge, GraphNode, BlockchainNode, BlockchainEdge, BlockchainGraph} from './models';
+import {Wallet, Transaction, BlockchainNode, BlockchainEdge, BlockchainGraph} from './models';
 
 import chunk from 'lodash.chunk'
 
@@ -52,7 +52,7 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
 
     let tx_jsons = json['txs'];
     let offset = 100;
-    while(json['txs'].length == 100) {
+    while(json['txs'].length === 100) {
         json = await fetchJson(`https://blockchain.info/multiaddr?active=${addresses.join('|')}&n=100&offset=${offset}`);
         tx_jsons.push(...json['txs']);
         offset += 100;

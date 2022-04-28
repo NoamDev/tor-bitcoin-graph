@@ -37,7 +37,6 @@ export class AddressesForm extends React.Component<AddressesFormProps,AddressesF
     }
 
     handleBuildGraph() {
-        console.log(this.props);
         this.props.onSubmit?.(this.state.addresses);
     }
 

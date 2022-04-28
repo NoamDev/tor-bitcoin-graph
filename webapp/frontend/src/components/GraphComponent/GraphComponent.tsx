@@ -1,6 +1,6 @@
 import React from "react";
 import { BlockchainGraph, Transaction, Wallet } from "../../blockchain/models";
-import cytoshape from 'cytoscape';
+import cytoshape, { EdgeSingular, NodeSingular } from 'cytoscape';
 import CytoscapeComponent from 'react-cytoscapejs';
 import yaml from 'js-yaml';
 import Grid from "@mui/material/Grid";
@@ -8,14 +8,25 @@ import WalletDetails from "../WalletDetails/WalletDetails";
 import TransactionDetails from "../TransactionDetails/TransactionDetails";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import FindPathComponent from "../FindPathComponent/FindPathComponent";
+import AddressList from "../AddressList/AddressList";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
 
 type GraphComponentProps = {
     graph: BlockchainGraph,
     onNewGraphClicked?: ()=>void
 };
 
+enum SidePanelValue {
+    EVENT_DETAILS,
+    FIND_PATH,
+    ADDRESS_LIST
+};
+
 type GraphComponentState = {
-    selectedElement: { type: 'node', element: Wallet}|{type: 'edge', element: Transaction}|null
+    sidePanel: SidePanelValue,
+    selectedElement: { type: 'node', details: Wallet}|{type: 'edge', details: Transaction}|null
 };
 
 export class GraphComponent extends React.Component<GraphComponentProps,GraphComponentState> {
@@ -43,6 +54,7 @@ export class GraphComponent extends React.Component<GraphComponentProps,GraphCom
         super(props);
         this.cy = null;
         this.state = {
+            sidePanel: SidePanelValue.EVENT_DETAILS,
             selectedElement: null
         }
     }
@@ -52,9 +64,10 @@ export class GraphComponent extends React.Component<GraphComponentProps,GraphCom
         this.cy.nodes().on('tap', (e) =>{
             this.setState(
                 {
+                    sidePanel: SidePanelValue.EVENT_DETAILS,
                     selectedElement: {
                         type: 'node',
-                        element: e.target.data().details
+                        details: e.target.data().details
                     }
                 }
             );
@@ -62,10 +75,12 @@ export class GraphComponent extends React.Component<GraphComponentProps,GraphCom
         this.cy.edges().on('tap', (e) =>{
             this.setState(
                 {
+                    sidePanel: SidePanelValue.EVENT_DETAILS,
                     selectedElement: {
                         type: 'edge',
-                        element: e.target.data().details
+                        details: e.target.data().details
                     }
+                    
                 }
             );
         });
@@ -89,23 +104,40 @@ export class GraphComponent extends React.Component<GraphComponentProps,GraphCom
         this.download(graph_yaml, 'graph.yaml', 'text/plain')
     }
 
-    find_shortest_path(from:string, to:string){
-        const {found, path} = this.cy!.elements().bfs({
-            root: `#${from}`,
-            visit: (v,e,u,i,depth)=> v.id()===to,
+    findShortestPath(from:string, to:string){
+
+        const {found, path} = this.cy!.elements().bfs( {
+            root: this.cy!.$(`#${from}`),
+            visit: (v,e,u,i,depth)=>{
+                if(v.id()===to) {
+                    return true;
+                }
+            },
             directed: true
         });
         if(found.empty()) {
             return null;
         } else {
-            const result = [];
-            for(const element of path.toArray()) {
-                if(element.isNode()) {
-                    result.push(element.id());
-                } else {
-                    result.push((element.data().details as Transaction).hash);
+            const edges: EdgeSingular[] = path.edges().toArray();
+            const nodes: NodeSingular[] = path.nodes().toArray();
+            const result: string[] = [];
+
+            let desired_node: NodeSingular|undefined = found.first();
+            let v;
+            let e;
+            
+            while(desired_node) {
+                do {
+                    v = nodes.pop()!;
+                    e = edges.pop();
+                } while(v.id() !== desired_node.id());
+                result.unshift(v.id());
+                if(e) {
+                    result.unshift(e.data().details.hash);
                 }
+                desired_node = e?.source();
             }
+            
             return result;
         }
     }
@@ -114,15 +146,20 @@ export class GraphComponent extends React.Component<GraphComponentProps,GraphCom
         this.props.onNewGraphClicked?.();
     }
 
-    renderSelectedElement() {
-        const selectedElement = this.state.selectedElement;
-        if(!selectedElement) {
+    handleSidePanelTabChanged(event:any, value: SidePanelValue) {
+        this.setState({
+            sidePanel: value
+        });
+    }
+
+    renderElementDetails() {
+        if(!this.state.selectedElement) {
             return (<Box m={2} >Select any node or edge to view details</Box>);
-        } else if(selectedElement.type === 'node') {
-            const wallet = selectedElement.element;
-            return (<WalletDetails wallet={wallet}/>)
-        } else if(selectedElement.type === 'edge') {
-            const tx = selectedElement.element;
+        } else if(this.state.selectedElement.type === 'node') {
+                        const wallet = this.state.selectedElement.details;
+                        return (<WalletDetails wallet={wallet}/>)
+        } else if(this.state.selectedElement.type === 'edge') {
+            const tx = this.state.selectedElement.details;
             return (<TransactionDetails tx={tx}/>)
         }
     }
@@ -145,7 +182,27 @@ export class GraphComponent extends React.Component<GraphComponentProps,GraphCom
                 </Grid>
                 <Grid item container spacing={2} direction="row">
                     <Grid item xs={5}>
-                        {this.renderSelectedElement()}
+                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                            <Tabs value={this.state.sidePanel} onChange={this.handleSidePanelTabChanged.bind(this)}>
+                                <Tab label="Element Details" />
+                                <Tab label="Find Path" />
+                                <Tab label="Address List" />
+                            </Tabs>
+                        </Box>
+                        <Box sx={{display: (this.state.sidePanel === SidePanelValue.EVENT_DETAILS? 'initial' : 'none')}}>
+                            {this.renderElementDetails()}
+                        </Box>
+                        <Box sx={{display: (this.state.sidePanel === SidePanelValue.FIND_PATH? 'initial' : 'none')}}>
+                            <FindPathComponent
+                                addresses={this.props.graph.nodes.map(node=>node.id)}
+                                findPath={this.findShortestPath.bind(this)}
+                            />
+                        </Box>
+                        <Box sx={{display: (this.state.sidePanel === SidePanelValue.ADDRESS_LIST? 'initial' : 'none')}}>
+                            <AddressList
+                                wallets = {this.props.graph.nodes.map(node=>node.details)}
+                            />
+                        </Box>
                     </Grid>
                     <Grid item xs={6}>
                         <CytoscapeComponent
