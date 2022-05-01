@@ -2,5 +2,7 @@ version: "3.9"
 services:
   webapp:
     build: webapp
+    image: noamdev/tor-bitcoin-graph_webapp
   tor:
     build: tor
+    image: noamdev/tor-bitcoin-graph_tor
