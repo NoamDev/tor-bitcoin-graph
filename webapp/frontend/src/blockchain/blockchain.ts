@@ -28,7 +28,7 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
     let addresses_set = new Set(addresses);
 
     let json = await fetchJson(`https://blockchain.info/multiaddr?active=${addresses.join('|')}&n=100`);
-    
+
     let nodes: {
         [key:string]: BlockchainNode
     } = {};
@@ -65,11 +65,15 @@ export async function getTransactionGraph(addresses: string[]): Promise<Blockcha
         let amount_out = 0;
         for(let input of tx_json['inputs']) {
             amount_in += input['prev_out']['value'];
-            input_addresses.push(input['prev_out']['addr']);
+            if(input['prev_out']['addr']) {
+                input_addresses.push(input['prev_out']['addr']);
+            }
         }
         for(let output of tx_json['out']) {
             amount_out += output['value'];
-            output_addresses.push(output['addr']);
+            if(output['addr']) {
+                output_addresses.push(output['addr']);
+            }
         }
         let fee = amount_in - amount_out;
         let tx: Transaction = {

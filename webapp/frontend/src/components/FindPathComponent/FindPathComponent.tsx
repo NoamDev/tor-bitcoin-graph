@@ -24,7 +24,6 @@ export default function FindPathComponent(props: FindPathComponentProps) {
 
     function handleFindShortestPath() {
         if(from && to) {
-            console.log('submitting')
             const path = props.findPath?.(from, to);
             if(path) {
                 setPathState({

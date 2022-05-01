@@ -8,6 +8,7 @@ import Grid from '@mui/material/Grid';
 import {AddressesForm} from './components/AddressesForm/AddressesForm';
 import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
 
 type AppProps = {};
 
@@ -100,9 +101,10 @@ class App extends React.Component<AppProps,AppState> {
             <Grid item>
               <AddressesForm onSubmit={this.buildGraph.bind(this)}/>
             </Grid>
+            <Divider orientation='vertical' flexItem>OR</Divider>
             <Grid item>
             <label htmlFor="contained-button-file">
-              <input accept=".txt" id="contained-button-file" type="file" onChange={this.handleBuildGraphFromFile.bind(this)} hidden/>
+              <input accept=".txt,.csv" id="contained-button-file" type="file" onChange={this.handleBuildGraphFromFile.bind(this)} hidden/>
               <Button variant="contained" component="span">
                 Build Graph From File
               </Button>

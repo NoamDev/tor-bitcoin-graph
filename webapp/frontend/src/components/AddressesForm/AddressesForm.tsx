@@ -25,12 +25,12 @@ export class AddressesForm extends React.Component<AddressesFormProps,AddressesF
     renderTextFields() {
         const inputs =  this.state.addresses.map((x,i)=>(
             <Grid item key={i}>
-                <TextField value={x} onChange={(event)=>{this.handleInputChanged(i, event.target.value)}}/>
+                <TextField fullWidth value={x} onChange={(event)=>{this.handleInputChanged(i, event.target.value)}}/>
             </Grid>
         ));
         inputs.push(
             <Grid item key={this.state.addresses.length}>
-                <TextField value={''} onChange={(event)=>{this.handleInputChanged(this.state.addresses.length, event.target.value)}}/>
+                <TextField fullWidth value={''} onChange={(event)=>{this.handleInputChanged(this.state.addresses.length, event.target.value)}}/>
             </Grid>
         )
         return inputs;
@@ -42,7 +42,10 @@ export class AddressesForm extends React.Component<AddressesFormProps,AddressesF
 
     render(): React.ReactNode {
         return (
-            <Grid container spacing={2} direction="column">
+            <Grid container spacing={2} direction="column" sx={{width:400}}>
+                <Grid item>
+                    Enter a list of Bitcoin addresses:
+                </Grid>
                 {this.renderTextFields()}
                 <Grid item>
                     <Button variant="contained" onClick={()=>this.handleBuildGraph()}>

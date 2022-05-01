@@ -13,6 +13,10 @@ import AddressList from "../AddressList/AddressList";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
+const fcose = require('cytoscape-fcose');
+
+cytoshape.use(fcose);
+
 type GraphComponentProps = {
     graph: BlockchainGraph,
     onNewGraphClicked?: ()=>void
@@ -208,7 +212,7 @@ export class GraphComponent extends React.Component<GraphComponentProps,GraphCom
                         <CytoscapeComponent
                             elements={elements}
                             style={ { width: '600px', height: '600px' } }
-                            layout= {{name: 'cose'}}
+                            layout= {{name: 'fcose'}}
                             stylesheet={this.styling}
                             cy={this.setCy.bind(this)}
                         />
