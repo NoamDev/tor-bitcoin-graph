@@ -8,7 +8,7 @@ async function fetchJson(url: string, backoff=1000) {
         r = await fetch(url);
         return await r.json();
     } catch(e) {
-        if(backoff >= 5000) {
+        if(backoff > 10000) {
             throw e;
         }
         return new Promise((resolve, reject)=>{
