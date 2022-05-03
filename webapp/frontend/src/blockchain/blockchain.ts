@@ -2,26 +2,26 @@ import {Wallet, Transaction, BlockchainNode, BlockchainEdge, BlockchainGraph} fr
 
 import chunk from 'lodash.chunk'
 
-async function fetchJson(url: string, backoff=1000) {
-    var r;
-    try {
-        r = await fetch(url);
-        return await r.json();
-    } catch(e) {
-        if(backoff > 10000) {
-            throw e;
+function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchJson(url: string) {
+    let r = null;
+    let backoff = 1000;
+    while(!r) {
+        try {
+            r = await fetch(url);
+        } catch(e) {
+            if(backoff > 10000) {
+                throw e;
+            } else {
+                await sleep(backoff);
+                backoff *= 2;    
+            }
         }
-        return new Promise((resolve, reject)=>{
-            setTimeout(async ()=>{
-                try {
-                    let json = await fetchJson(url, backoff*2);
-                    resolve(json);
-                } catch(e) {
-                    reject(e);
-                }
-            }, backoff);
-        });
     }
+    return await r.json();
 }
 
 export async function getTransactionGraph(addresses: string[]): Promise<BlockchainGraph> {

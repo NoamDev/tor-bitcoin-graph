@@ -14,6 +14,7 @@ type AppProps = {};
 
 type AppState = {
   isLoading: boolean,
+  isError: boolean,
   graph: BlockchainGraph|null,
 };
 
@@ -23,19 +24,29 @@ class App extends React.Component<AppProps,AppState> {
     super(props);
     this.state = {
       isLoading: false,
+      isError: false,
       graph: null
     };
   }
 
   async buildGraph(addresses: string[]) {
     this.setState({
-      isLoading: true
+      isLoading: true,
+      isError: false,
     });
-    const g = await getTransactionGraph(addresses);
-    this.setState({
-      isLoading: false,
-      graph: g
-    });
+    try {
+      const g = await getTransactionGraph(addresses);
+      this.setState({
+        isLoading: false,
+        isError: false,
+        graph: g
+      });
+    } catch(e) {
+      this.setState({
+        isLoading: false,
+        isError: true
+      });
+    }
   }
   async readFile(file: File): Promise<string> {
     return new Promise((resolve,reject)=>{
@@ -93,7 +104,6 @@ class App extends React.Component<AppProps,AppState> {
     } else {
       return (
         <Grid container spacing={2}
-        direction="row"
         alignItems="center"
         justifyContent="center"
         mt={2}
@@ -110,6 +120,9 @@ class App extends React.Component<AppProps,AppState> {
               </Button>
             </label>
             </Grid>
+            {this.state.isError && (<Grid item xs={12} textAlign='center'>
+              Network problem. Check your connection or try again later.
+            </Grid>)}
         </Grid>
         );
     }
