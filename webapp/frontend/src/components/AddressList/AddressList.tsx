@@ -46,8 +46,8 @@ export default function AddressList(props: AddressListProps) {
             </Select>
             </Grid>
             {
-                getSortedAddresses().map(addr =>(
-                    <Grid item>
+                getSortedAddresses().map((addr,i) =>(
+                    <Grid item key={i}>
                         {addr}
                     </Grid>
                 ))

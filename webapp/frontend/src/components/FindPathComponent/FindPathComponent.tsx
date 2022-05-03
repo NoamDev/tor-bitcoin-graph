@@ -46,12 +46,12 @@ export default function FindPathComponent(props: FindPathComponentProps) {
                 path_state.path.map((x,i) => 
                         (i%2 === 0) ?
                         (
-                            <Grid item>
+                            <Grid item key={i}>
                                 {x}
                             </Grid>
                         ) :
                         (
-                            <Grid item>
+                            <Grid item key={i}>
                                 tx: {x}
                             </Grid>
                         )
